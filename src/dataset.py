@@ -1,8 +1,4 @@
-"""Pinned PlantVillage metadata, leaf-grouped splits and lazy image preprocessing.
-
-The upstream repository uses a legacy dataset script. Read its published manifests
-rather than executing remote Python or relying on auto-converted text datasets.
-"""
+"""I use published color splits and keep photographs of each leaf together."""
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +11,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import yaml
 from datasets import ClassLabel, Dataset, Features, Image, Value
 from huggingface_hub import hf_hub_download
 from PIL import Image as PILImage
@@ -40,7 +35,7 @@ def seed_everything(seed: int) -> None:
 
 
 def resolve_leaf_id(path: str, leaf_map: dict) -> str:
-    """Match the pinned upstream loader's leaf-map and fallback rules."""
+    """I follow the pinned upstream loader's identifier rules."""
     class_name = path.split("/")[2]
     identifier = Path(path).name.replace("_final_masked", "").split("___")[-1]
     identifier = identifier.split("copy")[0]
@@ -53,50 +48,44 @@ def resolve_leaf_id(path: str, leaf_map: dict) -> str:
     return next((x for x in options if class_name in x), f"fallback_{identifier}")
 
 
-def read_metadata_files(root: str | Path) -> dict:
-    """Inspect metadata only; never decode or evaluate held-out images."""
+def read_metadata_files(root):
     root = Path(root)
-    card = (root / "card.md").read_text()
-    info = yaml.safe_load(card.split("---")[1])["dataset_info"]
-    names = next(f for f in info["features"] if f["name"] == "label")["dtype"]["class_label"]["names"]
-    classes = [names[str(i)] if str(i) in names else names[i] for i in range(len(names))]
     leaf_map = json.loads((root / "leaf-map.json").read_text())
+    paths = {split: (root / f"color_{split}.txt").read_text().splitlines()
+             for split in ("train", "test")}
+    classes = sorted({path.split("/")[2] for path in paths["train"]})
     records = {}
-    for split in ("train", "test"):
-        paths = (root / f"color_{split}.txt").read_text().splitlines()
-        if len(paths) != len(set(paths)):
+    for split, filenames in paths.items():
+        if len(filenames) != len(set(filenames)):
             raise ValueError(f"Duplicate paths in {split}")
         records[split] = []
-        for path in paths:
+        for path in filenames:
             parts = path.split("/")
             if len(parts) != 4 or parts[:2] != ["raw", "color"] or ".." in parts:
                 raise ValueError(f"Unexpected color path: {path}")
             records[split].append({"image_path": path, "label": classes.index(parts[2]),
                                    "leaf_id": resolve_leaf_id(path, leaf_map)})
-    return {"classes": classes, "records": records, "upstream_schema": info["features"],
-            "published_counts": {k: len(v) for k, v in records.items()}, "revision": REVISION}
+    return {"classes": classes, "records": records, "revision": REVISION,
+            "upstream_schema": ["image_path", "label", "leaf_id"],
+            "published_counts": {name: len(rows) for name, rows in records.items()}}
 
 
-def load_metadata(cache_dir: str | Path | None = None) -> dict:
-    """Download only ~8 MB of metadata; image archive is a separate explicit step."""
-    import tempfile
-    files = {"card.md": "README.md", "leaf-map.json": "leaf_grouping/leaf-map.json",
+def load_metadata(cache_dir):
+    # I read the manifests because the upstream dataset uses a legacy loading script.
+    root = Path(cache_dir) / "metadata"
+    root.mkdir(parents=True, exist_ok=True)
+    files = {"leaf-map.json": "leaf_grouping/leaf-map.json",
              "color_train.txt": "splits/color_train.txt", "color_test.txt": "splits/color_test.txt"}
-    with tempfile.TemporaryDirectory() as temp:
-        for local, remote in files.items():
-            source = hf_hub_download(REPO_ID, remote, repo_type="dataset", revision=REVISION,
-                                     cache_dir=str(cache_dir) if cache_dir else None)
-            (Path(temp) / local).write_bytes(Path(source).read_bytes())
-        return read_metadata_files(temp)
+    for local, remote in files.items():
+        source = hf_hub_download(REPO_ID, remote, repo_type="dataset", revision=REVISION,
+                                 cache_dir=str(Path(cache_dir) / "hub"))
+        (root / local).write_bytes(Path(source).read_bytes())
+    return read_metadata_files(root)
 
 
 def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
                 val_fraction: float = 0.2) -> dict:
-    """Partition whole leaves within class, then take a nested prefix per class.
-
-    Fractions apply to remaining training leaf groups (after validation and
-    quarantine), so image fractions are approximate and saved explicitly.
-    """
+    """I split by leaf within each class, then sample training leaf groups."""
     if not 0 < fraction <= 1 or not 0 < val_fraction < 1:
         raise ValueError("Fractions must be in (0, 1], with validation strictly below 1")
     records = metadata["records"]["train"]
@@ -144,7 +133,7 @@ def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
 
 
 def materialize_development(metadata: dict, splits: dict, cache_dir: str | Path) -> Dataset:
-    """Cache archive outside Git; extract only selected training/validation images."""
+    """I extract only the selected development images from the cached archive."""
     cache_dir = Path(cache_dir).resolve()
     cache_dir.mkdir(parents=True, exist_ok=True)
     archive = hf_hub_download(REPO_ID, "data.zip", repo_type="dataset", revision=REVISION,
@@ -154,7 +143,7 @@ def materialize_development(metadata: dict, splits: dict, cache_dir: str | Path)
     rows = []
     with zipfile.ZipFile(archive) as z:
         members = z.namelist()
-        # Accept either raw/... at archive root or one enclosing directory.
+        # The archive may have an enclosing directory before raw/color/.
         lookup = {}
         for name in members:
             pos = name.find("raw/color/")
@@ -181,6 +170,7 @@ def materialize_development(metadata: dict, splits: dict, cache_dir: str | Path)
 def image_transform(image_size: int = 224):
     if image_size < 32:
         raise ValueError("image_size must be at least 32")
+    # I use ImageNet normalization for both models to keep preprocessing consistent.
     return transforms.Compose([transforms.Resize((image_size, image_size)), transforms.ToTensor(),
                                transforms.Normalize(MEAN, STD)])
 
@@ -219,7 +209,7 @@ def make_loaders(development: Dataset, splits: dict, batch_size=32, seed=42,
     for name in ("train", "validation"):
         indices = [lookup[i] for i in splits[f"{name}_indices"]]
         data = LeafDataset(development.select(indices), image_transform(image_size))
-        # Avoid a singleton final training batch, including at small image sizes.
+        # I avoid a one-image training batch because of batch normalization.
         drop_last = name == "train" and len(data) % batch_size == 1
         if len(data) < 2 and name == "train":
             raise ValueError("Need at least two training images")
