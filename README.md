@@ -48,10 +48,18 @@ Test images remain unopened and unevaluated.
 
 1. **Notebook:** after publication, [progress_demo.ipynb opens in Colab](https://colab.research.google.com/github/Ifethecoder/plant-disease-classifier/blob/main/notebooks/progress_demo.ipynb).
    Another route is **File → Open notebook → GitHub**, using `Ifethecoder/plant-disease-classifier`.
-2. **Runtime:** **Runtime → Change runtime type → GPU**, followed by the cells in order.
-3. **Dependencies:** installation comes before importing PyTorch. If packages were
-   already imported, a runtime restart and another run from the top are necessary.
-4. **Storage:** `SAVE_TO_DRIVE = True` preserves checkpoints, losses, metrics and
+2. **Runtime:** under **Runtime → Change runtime type**, select a **GPU** and
+   runtime version **2026.07** (Python 3.12). Another runtime version must also use
+   Python 3.12. Available versions are listed in the
+   [Colab runtime documentation](https://research.google.com/colaboratory/runtime-version-faq.html).
+3. **Dependencies:** run the first setup cell, use **Runtime → Restart session**,
+   then rerun that setup cell and continue with the remaining cells. An unchanged
+   installation does not need another restart. This avoids using old libraries
+   that were already loaded before installation.
+4. **Checks:** setup stops before installation on an unsupported Python version,
+   and before dataset downloads if CUDA is unavailable. The Colab demo requires a
+   GPU; the Python modules and unit tests still support CPU execution.
+5. **Storage:** `SAVE_TO_DRIVE = True` preserves checkpoints, losses, metrics and
    figures. With Drive disabled, results need downloading before disconnecting.
 
 The GitHub changes are still local. Before publication, the notebook and a source
