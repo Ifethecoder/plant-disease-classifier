@@ -1,4 +1,8 @@
 """I evaluate on validation data and plot learning curves and predictions."""
+import matplotlib
+
+# I save figures to files so plotting works without a graphical display.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
