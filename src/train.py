@@ -1,4 +1,4 @@
-"""I train each model with cross-entropy and the same Adam settings."""
+"""Training with cross-entropy and matching Adam settings for both models."""
 import json
 from pathlib import Path
 
@@ -10,7 +10,7 @@ def run_epoch(model, loader, device, optimizer=None):
     training = optimizer is not None
     model.train(training)
     if training and getattr(model, "freeze_backbone", False):
-        # I also freeze batch-normalization statistics when the backbone is frozen.
+        # A frozen backbone also needs fixed batch-normalization statistics.
         model.eval()
         model.fc.train()
     criterion = nn.CrossEntropyLoss()
@@ -52,7 +52,7 @@ def train_model(model, train_loader, val_loader, classes, output_dir,
         history.append({"epoch": epoch, "train_loss": train["loss"], "val_loss": val["loss"],
                         "train_accuracy": train["accuracy"], "val_accuracy": val["accuracy"],
                         "train_samples": train["samples"], "val_samples": val["samples"]})
-        # I select the best validation accuracy, using loss to break a tie.
+        # Select the best validation accuracy, using loss to break a tie.
         score = (val["accuracy"], -val["loss"])
         if score > best_score:
             best_score = score

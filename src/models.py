@@ -1,4 +1,4 @@
-"""I compare the same ResNet-18 architecture with two initializations."""
+"""ResNet-18 with random or ImageNet initialization."""
 from pathlib import Path
 
 import torch
@@ -15,7 +15,7 @@ def build_model(num_classes, pretrained=False, freeze_backbone=False):
     if freeze_backbone:
         for parameter in model.parameters():
             parameter.requires_grad = False
-    # I replace ImageNet's 1,000 outputs with the PlantVillage classes.
+    # Replace ImageNet's 1,000 outputs with the PlantVillage classes.
     model.fc = nn.Linear(model.fc.in_features, num_classes)
     model.freeze_backbone = freeze_backbone
     return model

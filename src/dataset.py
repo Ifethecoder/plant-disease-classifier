@@ -1,4 +1,4 @@
-"""I use published color splits and keep photographs of each leaf together."""
+"""Published color splits with photographs grouped by physical leaf."""
 import json
 import math
 import random
@@ -31,7 +31,7 @@ def seed_everything(seed: int) -> None:
 
 
 def resolve_leaf_id(path: str, leaf_map: dict) -> str:
-    """I follow the pinned upstream loader's identifier rules."""
+    """Resolve leaf identifiers using the pinned upstream loader's rules."""
     class_name = path.split("/")[2]
     identifier = Path(path).name.replace("_final_masked", "").split("___")[-1]
     identifier = identifier.split("copy")[0]
@@ -69,7 +69,7 @@ def read_metadata_files(root):
 
 
 def load_metadata(cache_dir):
-    # I read the manifests because the upstream dataset uses a legacy loading script.
+    # The published manifests avoid relying on the legacy dataset loading script.
     root = Path(cache_dir) / "metadata"
     root.mkdir(parents=True, exist_ok=True)
     files = {"leaf-map.json": "leaf_grouping/leaf-map.json",
@@ -83,7 +83,7 @@ def load_metadata(cache_dir):
 
 def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
                 val_fraction: float = 0.2) -> dict:
-    """I split by leaf within each class, then sample training leaf groups."""
+    """Split by leaf within each class, then sample training leaf groups."""
     if not 0 < fraction <= 1 or not 0 < val_fraction < 1:
         raise ValueError("Fractions must be in (0, 1], with validation strictly below 1")
     records = metadata["records"]["train"]
@@ -126,7 +126,7 @@ def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
 
 
 def load_images(metadata: dict, splits: dict, cache_dir: str | Path) -> Dataset:
-    """I extract only the selected development images from the cached archive."""
+    """Extract only the selected training and validation images from the cached archive."""
     cache_dir = Path(cache_dir).resolve()
     cache_dir.mkdir(parents=True, exist_ok=True)
     archive = hf_hub_download(REPO_ID, "data.zip", repo_type="dataset", revision=REVISION,
@@ -163,7 +163,7 @@ def load_images(metadata: dict, splits: dict, cache_dir: str | Path) -> Dataset:
 def image_transform(image_size: int = 224):
     if image_size < 32:
         raise ValueError("image_size must be at least 32")
-    # I use ImageNet normalization for both models to keep preprocessing consistent.
+    # Both models use ImageNet normalization to keep preprocessing consistent.
     return transforms.Compose([transforms.Resize((image_size, image_size)), transforms.ToTensor(),
                                transforms.Normalize(MEAN, STD)])
 
@@ -191,7 +191,7 @@ def make_loaders(development: Dataset, splits: dict, batch_size=32, seed=42,
     for name in ("train", "validation"):
         indices = [lookup[i] for i in splits[f"{name}_indices"]]
         data = LeafDataset(development.select(indices), image_transform(image_size))
-        # I avoid a one-image training batch because of batch normalization.
+        # Avoid a one-image training batch because of batch normalization.
         drop_last = name == "train" and len(data) % batch_size == 1
         if len(data) < 2 and name == "train":
             raise ValueError("Need at least two training images")

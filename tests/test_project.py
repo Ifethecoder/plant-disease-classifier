@@ -1,4 +1,4 @@
-"""I check the core pipeline with small synthetic datasets on CPU."""
+"""Core pipeline checks using small synthetic datasets on CPU."""
 import json
 import zipfile
 from io import BytesIO

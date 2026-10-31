@@ -1,7 +1,7 @@
-"""I evaluate on validation data and plot learning curves and predictions."""
+"""Validation metrics, learning curves and prediction examples."""
 import matplotlib
 
-# I save figures to files so plotting works without a graphical display.
+# Save figures to files so plotting works without a graphical display.
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ def classification_metrics(targets, predictions, num_classes):
 
 
 def evaluate(model, loader, num_classes):
-    # I keep prediction order aligned with images when displaying examples.
+    # Prediction order must match image order when displaying examples.
     if not isinstance(loader.sampler, SequentialSampler) or loader.drop_last:
         raise ValueError("Validation requires shuffle=False and drop_last=False")
     model.eval()
@@ -57,7 +57,7 @@ def plot_predictions(dataset, targets, predictions, classes, path, mistakes_only
         axis.axis("off")
     for axis, index in zip(axes.flat, indices):
         image, _ = dataset[index]
-        # I reverse normalization only for displaying the image.
+        # Reverse normalization only for displaying the image.
         image = image.permute(1, 2, 0).numpy() * np.array(STD) + np.array(MEAN)
         axis.imshow(np.clip(image, 0, 1))
         axis.set_title(f"Actual: {classes[targets[index]]}\n"

@@ -1,4 +1,4 @@
-# I use Python 3.11 or 3.12; my local checks used Python 3.12.
+# Python 3.11 or 3.12; local checks used Python 3.12.
 torch==2.6.0
 torchvision==0.21.0
 datasets==3.6.0
