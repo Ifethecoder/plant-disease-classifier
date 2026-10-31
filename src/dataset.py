@@ -69,7 +69,7 @@ def read_metadata_files(root):
 
 
 def load_metadata(cache_dir):
-    # The published manifests avoid relying on the legacy dataset loading script.
+    # The published file lists avoid executing the dataset's custom loading script.
     root = Path(cache_dir) / "metadata"
     root.mkdir(parents=True, exist_ok=True)
     files = {"leaf-map.json": "leaf_grouping/leaf-map.json",

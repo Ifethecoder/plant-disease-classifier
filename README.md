@@ -6,15 +6,15 @@ uses ResNet-18 with random weights and ResNet-18 with ImageNet-pretrained weight
 Both models predict the same 38 PlantVillage crop/disease classes.
 
 The implementation passes CPU tests, including synthetic training and inference.
-The PlantVillage GPU experiment has not yet been run, so no classification results
-are reported here. The notebook has no saved training outputs.
+No PlantVillage GPU experiment results are included here yet. The notebook has no saved training outputs.
 
 ## Experiment
 
 The dataset consists of color images from [mohanty/PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage),
 pinned to revision `9e97599868962bd0079b8db4b7f1efa9185fa1e7`.
-The repository uses a legacy loading script. The published manifests and leaf map
-provide the records for a Hugging Face image dataset without executing remote code.
+The dataset repository includes a custom Python loading script, `plant_village.py`.
+This project builds a Hugging Face image dataset from the published file lists and
+leaf map without executing that script.
 
 The published test set stays intact. Eligible training data is split by leaf within
 each class, keeping photographs with the same known leaf identifier together.
@@ -46,7 +46,7 @@ Test images remain unopened and unevaluated.
 
 ## Running the demo in Colab
 
-1. **Notebook:** after publication, [progress_demo.ipynb opens in Colab](https://colab.research.google.com/github/Ifethecoder/plant-disease-classifier/blob/main/notebooks/progress_demo.ipynb).
+1. **Notebook:** [progress_demo.ipynb opens in Colab](https://colab.research.google.com/github/Ifethecoder/plant-disease-classifier/blob/main/notebooks/progress_demo.ipynb).
    Another route is **File → Open notebook → GitHub**, using `Ifethecoder/plant-disease-classifier`.
 2. **Runtime:** under **Runtime → Change runtime type**, select a **GPU** and
    runtime version **2026.07** (Python 3.12). Another runtime version must also use
@@ -62,8 +62,8 @@ Test images remain unopened and unevaluated.
 5. **Storage:** `SAVE_TO_DRIVE = True` preserves checkpoints, losses, metrics and
    figures. With Drive disabled, results need downloading before disconnecting.
 
-The GitHub changes are still local. Before publication, the notebook and a source
-ZIP can be uploaded into Colab. After extraction, `PROJECT_DIR` in the first cell
+The project is published on GitHub. As an alternative to opening it from GitHub,
+the notebook and a source ZIP can be uploaded into Colab. After extraction, `PROJECT_DIR` in the first cell
 points to the project root. The source ZIP excludes `.venv`, `.cache`, data and
 checkpoints.
 
@@ -84,11 +84,11 @@ implemented.
 | `notebooks/progress_demo.ipynb` | Two-model experiment, results table and inference demo |
 | `tests/test_project.py` | Small offline checks using synthetic data |
 
-The notebook loads metadata, saves fixed split indices, downloads the selected
-images, and includes a training-only visual inspection before the two-model loop.
+The notebook loads metadata, saves fixed split indices, and provides cells to
+reproduce the metadata audit. After downloading the selected images, a training-only
+gallery allows visual inspection before the two-model loop.
 The gallery displays raw image examples, labels and dimensions. Each run starts
-with the same seed
-and fresh loaders, then trains, reloads the best checkpoint, and evaluates on the
+with the same seed and fresh loaders, then trains, reloads the best checkpoint, and evaluates on the
 same validation set. The final cells display the comparison, curves, examples and
 mistakes.
 

@@ -10,8 +10,9 @@ Dataset: [mohanty/PlantVillage](https://huggingface.co/datasets/mohanty/PlantVil
 Revision: `9e97599868962bd0079b8db4b7f1efa9185fa1e7`.
 
 The card describes image, image_path, label, crop, disease and leaf_id fields.
-The legacy loading script makes the published manifests the basis for image
-records. These retain image path, label, leaf identifier and original training
+Image records are built from the published file lists rather than executing
+`plant_village.py`, the dataset's custom Python loading script. These records retain
+image path, label, leaf identifier and original training
 index; crop and disease names come from the class label. The sorted class order
 matches the 38 classes in the original audit. Neither published split contains
 duplicate paths.
