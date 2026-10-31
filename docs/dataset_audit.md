@@ -2,9 +2,10 @@
 
 The audit covered the Hugging Face dataset card, loading script, color manifests
 and leaf map before split implementation. Metadata checks included counts,
-duplicate paths, class labels and overlapping leaf identifiers. Visual inspection
-of training images should be completed in Colab after downloading images and
-before training. The test set remains reserved for final evaluation.
+duplicate paths, class labels and overlapping leaf identifiers. The saved Colab
+run reproduces these metadata checks and includes a training-image gallery for
+visual inspection before training. Displaying the gallery does not establish
+disease-label correctness. The test set remains reserved for final evaluation.
 
 Dataset: [mohanty/PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage).
 Revision: `9e97599868962bd0079b8db4b7f1efa9185fa1e7`.

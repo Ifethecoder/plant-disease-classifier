@@ -140,11 +140,11 @@ def test_inference_label_and_confidence(tmp_path):
     assert result["confidence"] == pytest.approx(torch.tensor([0., 2.]).softmax(0)[1].item())
 
 
-def test_notebook_is_valid_and_unexecuted():
+def test_notebook_is_valid_and_has_no_error_outputs():
     path = Path(__file__).resolve().parents[1] / "notebooks/progress_demo.ipynb"
     notebook = nbformat.read(path, as_version=4)
     nbformat.validate(notebook)
     for cell in notebook.cells:
         if cell.cell_type == "code":
             compile(cell.source, "notebook_cell", "exec")
-            assert cell.execution_count is None and cell.outputs == []
+            assert all(output.output_type != "error" for output in cell.outputs)

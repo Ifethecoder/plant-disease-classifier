@@ -6,7 +6,8 @@ uses ResNet-18 with random weights and ResNet-18 with ImageNet-pretrained weight
 Both models predict the same 38 PlantVillage crop/disease classes.
 
 The implementation passes CPU tests, including synthetic training and inference.
-No PlantVillage GPU experiment results are included here yet. The notebook has no saved training outputs.
+The notebook now includes saved outputs from a completed PlantVillage experiment
+on a Tesla T4 GPU in Colab, including audit checks, training curves and predictions.
 
 ## Experiment
 
@@ -44,6 +45,27 @@ accuracy and macro F1, averaging F1 equally across all 38 classes. Validation sc
 are development estimates because the same set also supports checkpoint selection.
 Test images remain unopened and unevaluated.
 
+## Initial validation results
+
+The saved Colab run on 2026-10-31 used seed 42, 3,615 training images, 8,646
+validation images, and five epochs per model with the settings above.
+
+| Initialization | Validation accuracy | Macro F1 | Selected epoch |
+|---|---:|---:|---:|
+| Random | 58.69% | 0.4853 | 5 |
+| ImageNet pretrained | 82.73% | 0.7926 | 5 |
+
+These values are rounded as displayed in the saved notebook. Pretraining achieved
+about 24 percentage points higher validation accuracy in this run. This is a
+single-seed, short-budget result; validation also selected the checkpoints, and
+these scores do not establish final test performance or reliability on field images.
+
+The [executed notebook](notebooks/progress_demo.ipynb) contains the original logs,
+metadata checks, training-image gallery, learning curves, prediction examples and
+an inference example. This summary uses those saved outputs; the GPU experiment
+was not rerun locally. Checkpoints and separate result files are saved in the
+configured Google Drive run directory and are not committed to Git.
+
 ## Running the demo in Colab
 
 1. **Notebook:** [progress_demo.ipynb opens in Colab](https://colab.research.google.com/github/Ifethecoder/plant-disease-classifier/blob/main/notebooks/progress_demo.ipynb).
@@ -63,8 +85,8 @@ Test images remain unopened and unevaluated.
    figures. With Drive disabled, results need downloading before disconnecting.
 
 The project is published on GitHub. As an alternative to opening it from GitHub,
-the notebook and a source ZIP can be uploaded into Colab. After extraction, `PROJECT_DIR` in the first cell
-points to the project root. The source ZIP excludes `.venv`, `.cache`, data and
+the notebook and a source ZIP can be uploaded into Colab. After extraction,
+`PROJECT_DIR` in the first cell points to the project root. The source ZIP excludes `.venv`, `.cache`, data and
 checkpoints.
 
 The first image download is a 2.18 GB archive, with extra space needed for extracted
@@ -88,8 +110,8 @@ The notebook loads metadata, saves fixed split indices, and provides cells to
 reproduce the metadata audit. After downloading the selected images, a training-only
 gallery allows visual inspection before the two-model loop.
 The gallery displays raw image examples, labels and dimensions. Each run starts
-with the same seed and fresh loaders, then trains, reloads the best checkpoint, and evaluates on the
-same validation set. The final cells display the comparison, curves, examples and
+with the same seed and fresh loaders, then trains, reloads the best checkpoint,
+and evaluates on the same validation set. The final cells display the comparison, curves, examples and
 mistakes.
 
 The run directory contains shared `settings.json` and `splits.json`, a comparison
@@ -122,8 +144,8 @@ model outputs/weight selection, known metrics, synthetic training and checkpoint
 reload, inference, and notebook validity. The notebook's comparison cell also ran
 on synthetic images with real random and cached ImageNet models on CPU. Matplotlib
 emits dependency deprecation warnings, but the plots pass their checks. These checks
-are software verification, not plant disease classification results. The real
-image-archive download and full GPU experiment still need a Colab run.
+are software verification, separate from the PlantVillage results above. The saved
+Colab outputs also document the real image-archive loading and GPU comparison.
 
 ## Next steps and limitations
 
