@@ -43,10 +43,17 @@ fractions, with unchanged class ordering and selected indices.
 
 ## Visual inspection in Colab
 
-Visual inspection of real images is still pending. The notebook now includes a
-training-only gallery after the image download, with one sampled image per class,
-original dimensions and labels. The run directory stores gallery figures, the
-sampling seed and image paths in `image_review_samples.json`, and editable notes
-in `image_review_notes.md`. The notes remain marked pending until the images have
-been examined and observations recorded. This sample review can flag image-quality
-or label concerns, but cannot establish the correctness of every disease label.
+Visual inspection should be completed in `notebooks/progress_demo.ipynb` after the
+image download and before training. This step is still pending.
+
+The gallery shows one sampled training image per class, with labels and original
+dimensions. The review should check sharpness, lighting, backgrounds and whether
+the crop/condition appears consistent with the label. Validation and test images
+are excluded from this gallery.
+
+After examining the images, observations should be entered in the notebook's
+visual review notes cell and saved by rerunning that cell. Gallery figures,
+`image_review_samples.json` and `image_review_notes.md` provide the review evidence
+in the run directory. The review should only be marked complete after the images
+have been examined and observations recorded. This small sample can flag concerns
+but cannot establish the correctness of every disease label.
