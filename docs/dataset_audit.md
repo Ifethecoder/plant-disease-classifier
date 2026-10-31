@@ -41,3 +41,7 @@ These groups stay intact, with training groups shared with test conservatively
 excluded. Unknown physical-leaf identities remain a limitation. Checks on cached
 real metadata after the refactor confirmed known leaf-ID disjointness for all four
 fractions, with unchanged class ordering and selected indices.
+
+The notebook includes executable metadata-audit cells before the image download.
+They print counts and shared identifiers, then check leaf-ID separation and class
+coverage in the selected splits. These checks can be rerun independently of training.
