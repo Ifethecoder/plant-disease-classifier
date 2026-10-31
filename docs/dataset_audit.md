@@ -1,17 +1,19 @@
-# My dataset audit
+# Dataset audit
 
-I inspected the Hugging Face dataset card, loading script, color manifests and leaf
-map before implementing my splits. I checked counts, duplicate paths, class labels
-and overlapping leaf identifiers using metadata; I did not inspect test images.
+The audit covered the Hugging Face dataset card, loading script, color manifests
+and leaf map before split implementation. Metadata checks included counts,
+duplicate paths, class labels and overlapping leaf identifiers. Test images were
+not inspected.
 
 Dataset: [mohanty/PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage).
 Revision: `9e97599868962bd0079b8db4b7f1efa9185fa1e7`.
 
 The card describes image, image_path, label, crop, disease and leaf_id fields.
-The repository uses a legacy script, so I build image records from its manifests.
-I retain image path, label, leaf identifier and original training index; crop and
-disease names come from the class label. My sorted class order matches the 38
-classes in the original audit. Neither published split contains duplicate paths.
+The legacy loading script makes the published manifests the basis for image
+records. These retain image path, label, leaf identifier and original training
+index; crop and disease names come from the class label. The sorted class order
+matches the 38 classes in the original audit. Neither published split contains
+duplicate paths.
 
 | Metadata check | Count |
 |---|---:|
@@ -29,12 +31,12 @@ classes in the original audit. Neither published split contains duplicate paths.
 | 10% | 3,615 |
 | 30% | 10,530 |
 
-I preserve whole leaf groups, making the 10% group's actual image fraction 10.43%.
-The groups are nested across fractions and validation stays fixed for a given seed.
-I save the class mapping and exact selected indices with each experiment.
+Preserving whole leaf groups gives the nominal 10% subset an actual image fraction
+of 10.43%. The groups are nested across fractions, and validation stays fixed for
+a given seed. Each experiment saves the class mapping and exact selected indices.
 
 The upstream rules use filename fallbacks for 10,518 training and 2,676 test images.
-I keep these groups intact and conservatively exclude training groups shared with
-test, but unknown physical-leaf identities remain a limitation. I checked all four
-fractions for known leaf-ID disjointness using the cached real metadata after the
-refactor; the class ordering and selected indices were unchanged.
+These groups stay intact, with training groups shared with test conservatively
+excluded. Unknown physical-leaf identities remain a limitation. Checks on cached
+real metadata after the refactor confirmed known leaf-ID disjointness for all four
+fractions, with unchanged class ordering and selected indices.
