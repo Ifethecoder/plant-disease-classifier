@@ -1,4 +1,4 @@
-# Python 3.11 or 3.12; tested CPU environment recorded in docs/verification.md.
+# I use Python 3.11 or 3.12; my local checks used Python 3.12.
 torch==2.6.0
 torchvision==0.21.0
 datasets==3.6.0
@@ -7,6 +7,5 @@ numpy==2.2.6
 scikit-learn==1.6.1
 matplotlib==3.10.3
 Pillow==11.2.1
-PyYAML==6.0.2
 pytest==8.3.5
 nbformat==5.10.4
