@@ -40,3 +40,13 @@ These groups stay intact, with training groups shared with test conservatively
 excluded. Unknown physical-leaf identities remain a limitation. Checks on cached
 real metadata after the refactor confirmed known leaf-ID disjointness for all four
 fractions, with unchanged class ordering and selected indices.
+
+## Visual inspection in Colab
+
+Visual inspection of real images is still pending. The notebook now includes a
+training-only gallery after the image download, with one sampled image per class,
+original dimensions and labels. The run directory stores gallery figures, the
+sampling seed and image paths in `image_review_samples.json`, and editable notes
+in `image_review_notes.md`. The notes remain marked pending until the images have
+been examined and observations recorded. This sample review can flag image-quality
+or label concerns, but cannot establish the correctness of every disease label.
