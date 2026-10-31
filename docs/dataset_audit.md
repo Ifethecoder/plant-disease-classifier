@@ -2,8 +2,9 @@
 
 The audit covered the Hugging Face dataset card, loading script, color manifests
 and leaf map before split implementation. Metadata checks included counts,
-duplicate paths, class labels and overlapping leaf identifiers. Test images were
-not inspected.
+duplicate paths, class labels and overlapping leaf identifiers. Visual inspection
+of training images should be completed in Colab after downloading images and
+before training. The test set remains reserved for final evaluation.
 
 Dataset: [mohanty/PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage).
 Revision: `9e97599868962bd0079b8db4b7f1efa9185fa1e7`.
@@ -40,20 +41,3 @@ These groups stay intact, with training groups shared with test conservatively
 excluded. Unknown physical-leaf identities remain a limitation. Checks on cached
 real metadata after the refactor confirmed known leaf-ID disjointness for all four
 fractions, with unchanged class ordering and selected indices.
-
-## Visual inspection in Colab
-
-Visual inspection should be completed in `notebooks/progress_demo.ipynb` after the
-image download and before training. This step is still pending.
-
-The gallery shows one sampled training image per class, with labels and original
-dimensions. The review should check sharpness, lighting, backgrounds and whether
-the crop/condition appears consistent with the label. Validation and test images
-are excluded from this gallery.
-
-After examining the images, observations should be entered in the notebook's
-visual review notes cell and saved by rerunning that cell. Gallery figures,
-`image_review_samples.json` and `image_review_notes.md` provide the review evidence
-in the run directory. The review should only be marked complete after the images
-have been examined and observations recorded. This small sample can flag concerns
-but cannot establish the correctness of every disease label.
