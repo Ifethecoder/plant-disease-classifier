@@ -86,8 +86,8 @@ implemented.
 
 The notebook loads metadata, saves fixed split indices, downloads the selected
 images, and includes a training-only visual inspection before the two-model loop.
-The gallery saves raw image examples, labels, dimensions and sample paths; a notes
-cell records observations after manual review. Each run starts with the same seed
+The gallery displays raw image examples, labels and dimensions. Each run starts
+with the same seed
 and fresh loaders, then trains, reloads the best checkpoint, and evaluates on the
 same validation set. The final cells display the comparison, curves, examples and
 mistakes.
