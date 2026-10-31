@@ -1,7 +1,4 @@
 """I use published color splits and keep photographs of each leaf together."""
-from __future__ import annotations
-
-import hashlib
 import json
 import math
 import random
@@ -13,7 +10,6 @@ import numpy as np
 import torch
 from datasets import ClassLabel, Dataset, Features, Image, Value
 from huggingface_hub import hf_hub_download
-from PIL import Image as PILImage
 from torch.utils.data import DataLoader, Dataset as TorchDataset
 from torchvision import transforms
 
@@ -45,7 +41,10 @@ def resolve_leaf_id(path: str, leaf_map: dict) -> str:
     options = leaf_map.get(identifier.lower(), [])
     if len(options) == 1:
         return options[0]
-    return next((x for x in options if class_name in x), f"fallback_{identifier}")
+    for leaf_id in options:
+        if class_name in leaf_id:
+            return leaf_id
+    return f"fallback_{identifier}"
 
 
 def read_metadata_files(root):
@@ -66,7 +65,6 @@ def read_metadata_files(root):
             records[split].append({"image_path": path, "label": classes.index(parts[2]),
                                    "leaf_id": resolve_leaf_id(path, leaf_map)})
     return {"classes": classes, "records": records, "revision": REVISION,
-            "upstream_schema": ["image_path", "label", "leaf_id"],
             "published_counts": {name: len(rows) for name, rows in records.items()}}
 
 
@@ -94,7 +92,7 @@ def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
     quarantine = [i for i, r in enumerate(records)
                   if r["leaf_id"] in test_groups or r["image_path"] in test_paths]
     excluded = set(quarantine)
-    grouped = defaultdict(lambda: defaultdict(list))
+    grouped = [defaultdict(list) for _ in metadata["classes"]]
     leaf_labels = {}
     for i, row in enumerate(records):
         if i in excluded:
@@ -117,22 +115,17 @@ def make_splits(metadata: dict, fraction: float = 0.1, seed: int = 42,
         pool.extend(i for g in train_groups for i in grouped[label][g])
         n_train = max(1, math.ceil(len(train_groups) * fraction))
         train.extend(i for g in train_groups[:n_train] for i in grouped[label][g])
-    payload = {"revision": metadata["revision"], "seed": seed, "fraction": fraction,
+    splits = {"revision": metadata["revision"], "seed": seed, "fraction": fraction,
                "val_fraction": val_fraction, "train_indices": sorted(train),
-               "validation_indices": sorted(validation), "pool_indices": sorted(pool),
+               "validation_indices": sorted(validation),
                "quarantine_indices": quarantine, "classes": metadata["classes"]}
-    payload["metadata_sha256"] = hashlib.sha256(json.dumps(metadata["records"], sort_keys=True).encode()).hexdigest()
-    payload["split_sha256"] = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
-    payload["counts"] = {"train": len(train), "validation": len(validation), "pool": len(pool),
+    splits["counts"] = {"train": len(train), "validation": len(validation), "pool": len(pool),
                          "quarantined": len(quarantine), "test_reserved": len(test_paths)}
-    payload["actual_image_fraction"] = len(train) / len(pool)
-    payload["class_counts"] = {name: {"train": sum(records[i]["label"] == k for i in train),
-                                     "validation": sum(records[i]["label"] == k for i in validation)}
-                               for k, name in enumerate(metadata["classes"])}
-    return payload
+    splits["actual_image_fraction"] = len(train) / len(pool)
+    return splits
 
 
-def materialize_development(metadata: dict, splits: dict, cache_dir: str | Path) -> Dataset:
+def load_images(metadata: dict, splits: dict, cache_dir: str | Path) -> Dataset:
     """I extract only the selected development images from the cached archive."""
     cache_dir = Path(cache_dir).resolve()
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -185,19 +178,8 @@ class LeafDataset(TorchDataset):
 
     def __getitem__(self, index):
         row = self.records[index]
-        image = row["image"]
-        if isinstance(image, (str, Path)):
-            with PILImage.open(image) as opened:
-                image = opened.convert("RGB")
-        else:
-            image = image.convert("RGB")
+        image = row["image"].convert("RGB")
         return self.transform(image), int(row["label"])
-
-
-def seed_worker(worker_id: int):
-    worker_seed = torch.initial_seed() % (2**32)
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
 
 
 def make_loaders(development: Dataset, splits: dict, batch_size=32, seed=42,
@@ -214,7 +196,6 @@ def make_loaders(development: Dataset, splits: dict, batch_size=32, seed=42,
         if len(data) < 2 and name == "train":
             raise ValueError("Need at least two training images")
         loaders.append(DataLoader(data, batch_size=batch_size, shuffle=name == "train",
-                                  num_workers=num_workers, worker_init_fn=seed_worker,
-                                  generator=torch.Generator().manual_seed(seed),
+                                  num_workers=num_workers, generator=torch.Generator().manual_seed(seed),
                                   drop_last=drop_last, pin_memory=torch.cuda.is_available()))
     return tuple(loaders)
