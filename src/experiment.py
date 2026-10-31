@@ -29,8 +29,7 @@ def run_comparison(config: TrainConfig, output_dir: str | Path, cache_dir: str |
                                current.num_workers, current.image_size)
         model = build_model(len(metadata["classes"]), pretrained, current.freeze_backbone)
         run_dir = output / name
-        fit(model, *loaders, current, run_dir, metadata["classes"], splits["split_sha256"])
-        save_json(run_dir / "splits.json", splits)
+        fit(model, *loaders, current, run_dir, metadata["classes"], splits["split_sha256"], split_manifest=splits)
         # Release training model/optimizer memory before checkpoint evaluation.
         del model
         evaluate_checkpoint(run_dir / "best.pt", loaders[1])
@@ -41,6 +40,6 @@ def run_comparison(config: TrainConfig, output_dir: str | Path, cache_dir: str |
 if __name__ == "__main__":
     import os
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
-    args = vars(parse_args())
+    args = vars(parse_args(comparison=True))
     output, cache = args.pop("output"), args.pop("cache_dir")
     run_comparison(TrainConfig(**args), output, cache)

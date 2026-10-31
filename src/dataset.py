@@ -169,7 +169,9 @@ def materialize_development(metadata: dict, splits: dict, cache_dir: str | Path)
             if not target.is_file():
                 target.parent.mkdir(parents=True, exist_ok=True)
                 with z.open(lookup[row["image_path"]]) as source:
-                    target.write_bytes(source.read())
+                    temporary = target.with_suffix(target.suffix + ".tmp")
+                    temporary.write_bytes(source.read())
+                    temporary.replace(target)
             rows.append({**row, "source_index": index, "image": str(target)})
     features = Features({"image_path": Value("string"), "label": ClassLabel(names=metadata["classes"]),
                          "leaf_id": Value("string"), "source_index": Value("int64"), "image": Image()})

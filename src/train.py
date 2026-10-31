@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import platform
 import subprocess
@@ -36,7 +37,7 @@ class TrainConfig:
     device: str = "auto"
 
     def __post_init__(self):
-        if self.epochs < 1 or self.batch_size < 2 or self.learning_rate <= 0:
+        if self.epochs < 1 or self.batch_size < 2 or not math.isfinite(self.learning_rate) or self.learning_rate <= 0:
             raise ValueError("Need epochs >= 1, batch_size >= 2, learning_rate > 0")
         if not 0 < self.fraction <= 1 or not 0 < self.val_fraction < 1:
             raise ValueError("Invalid dataset fractions")
@@ -94,7 +95,8 @@ def run_epoch(model, loader, device, optimizer=None) -> dict:
 
 
 def fit(model, train_loader, val_loader, config: TrainConfig, output_dir: str | Path,
-        classes: list[str], split_sha256: str = "unspecified") -> list[dict]:
+        classes: list[str], split_sha256: str = "unspecified",
+        split_manifest: dict | None = None) -> list[dict]:
     """Train and persist best state. Selection: accuracy, breaking ties by loss."""
     output = Path(output_dir)
     if output.exists() and any(output.iterdir()):
@@ -107,16 +109,20 @@ def fit(model, train_loader, val_loader, config: TrainConfig, output_dir: str | 
     try:
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True,
                                           stderr=subprocess.DEVNULL).strip()
+        git_dirty = bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL).strip())
     except (OSError, subprocess.CalledProcessError):
-        commit = None
+        commit, git_dirty = None, None
     import importlib.metadata
     packages = {name: importlib.metadata.version(name) for name in
                 ("torch", "torchvision", "datasets", "numpy", "scikit-learn", "Pillow")}
     save_json(output / "config.json", asdict(config))
+    if split_manifest is not None:
+        save_json(output / "splits.json", split_manifest)
     save_json(output / "environment.json", {"python": platform.python_version(),
               "platform": platform.platform(), "packages": packages, "device": str(device),
               "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
-              "git_commit": commit, "dataset_revision": REVISION,
+              "git_commit": commit, "git_dirty": git_dirty, "dataset_revision": REVISION,
               "split_sha256": split_sha256, "optimizer": "Adam", "weight_decay": 0,
               "pretrained_weights": "IMAGENET1K_V1" if config.pretrained else None,
               "trainable_parameters": sum(p.numel() for p in model.parameters() if p.requires_grad)})
@@ -151,6 +157,9 @@ def fit(model, train_loader, val_loader, config: TrainConfig, output_dir: str | 
 
 
 def train_experiment(config: TrainConfig, output_dir: str | Path, cache_dir: str | Path):
+    output = Path(output_dir)
+    if output.exists() and any(output.iterdir()):
+        raise FileExistsError(f"Use a new output directory: {output}")
     seed_everything(config.seed)
     metadata = load_metadata(Path(cache_dir) / "hub")
     splits = make_splits(metadata, config.fraction, config.seed, config.val_fraction)
@@ -158,14 +167,16 @@ def train_experiment(config: TrainConfig, output_dir: str | Path, cache_dir: str
     loaders = make_loaders(development, splits, config.batch_size, config.seed,
                            config.num_workers, config.image_size)
     model = build_model(len(metadata["classes"]), config.pretrained, config.freeze_backbone)
-    history = fit(model, *loaders, config, output_dir, metadata["classes"], splits["split_sha256"])
-    save_json(Path(output_dir) / "splits.json", splits)
+    history = fit(model, *loaders, config, output_dir, metadata["classes"], splits["split_sha256"],
+                  split_manifest=splits)
     return history
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pretrained", action="store_true")
+def parse_args(comparison=False):
+    description = "Run a matched random/ImageNet ResNet-18 comparison." if comparison else __doc__
+    parser = argparse.ArgumentParser(description=description)
+    if not comparison:
+        parser.add_argument("--pretrained", action="store_true")
     parser.add_argument("--freeze-backbone", action="store_true")
     parser.add_argument("--fraction", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
