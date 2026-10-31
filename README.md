@@ -102,7 +102,7 @@ python -m pytest -q
 
 Direct dependencies are pinned in `requirements.txt`; `requirements-lock.txt`
 records the complete tested environment. The notebook saves settings, package
-versions, source commit, dataset revision and split indices. Python, NumPy and
+versions, dataset revision and split indices. Python, NumPy and
 PyTorch are seeded, with deterministic operations requested where practical.
 Results can still vary across hardware. Both runs drop a final singleton training
 batch to avoid batch-normalization failures; validation never drops samples.
